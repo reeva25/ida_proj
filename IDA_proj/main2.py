@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -9,14 +10,17 @@ def Cleaning (file_path):
     df=pd.read_excel(file_path)
     mean_volume = df['Volume'].mean()
     print(mean_volume)
+
     q1 = df['Volume'].quantile(0.25)
     q3 = df['Volume'].quantile(0.75)
     iqr = q3 - q1
     upper_bound = q3 + 1.5 * iqr
     lower_bound = q1 - 1.5 * iqr
-    # df=df.drop((df['Volume']>upper_bound)|(df['Volume']<lower_bound))
-    df = df[(df['Volume'] > upper_bound) | (df['Volume'] < lower_bound)]
+    # # df=df.drop((df['Volume']>upper_bound)|(df['Volume']<lower_bound))
+    df = df[(df['Volume'] < upper_bound) & (df['Volume'] > lower_bound)]
+    df=df[(np.abs(df['Volume']) < (3 * df['Volume'].std()))]
     df = df.dropna()
+    df=df.drop_duplicates()
     x = df[['Open', 'High', 'Low', 'Volume']]
     y = df['Close']
     return (df,x,y)
@@ -24,8 +28,6 @@ def Cleaning (file_path):
 df,x,y= Cleaning('IDA STOCK 1.xlsx')
 
 # df = pd.read_excel('IDA STOCK 1.xlsx')
-
-
 
 model = LinearRegression()
 model.fit(x, y)
@@ -48,7 +50,7 @@ def Tester(file_path):
 
     # Plotting the results
     plt.plot(dates, y,color="cyan" ,label='Actual Close Price')
-    plt.plot(dates, y_pred, color="#FC0FC0", label='Predicted Close Price')
+    plt.plot(dates, y_pred, color="yellow", label='Predicted Close Price')
     plt.xlabel('Date')
     plt.ylabel('Close Price')
     plt.title('Actual vs Predicted Close Price Over Time')
